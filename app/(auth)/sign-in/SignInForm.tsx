@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn, authClient } from "@/lib/auth-client";
-import { Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Loader2, Eye, EyeOff, ArrowLeft, ShieldCheck } from "lucide-react";
 
 function getRoleDashboard(role?: string): string {
   if (role === "admin") return "/admin";
@@ -22,7 +22,6 @@ export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError]               = useState("");
   const [loading, setLoading]           = useState(false);
-  const [focusField, setFocusField]     = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,103 +44,41 @@ export default function SignInForm() {
     }
   }
 
-  const glowInputStyle = (field: string): React.CSSProperties => ({
-    width: "100%",
-    height: "50px",
-    background: "rgba(0, 255, 255, 0.04)",
-    border: `1px solid ${focusField === field ? "#06B6D4" : "rgba(6, 182, 212, 0.25)"}`,
-    borderRadius: "8px",
-    color: "#e2f8ff",
-    padding: "0 16px",
-    fontSize: "14px",
-    outline: "none",
-    transition: "all 0.25s ease",
-    boxShadow: focusField === field ? "0 0 14px rgba(6, 182, 212, 0.3), inset 0 0 8px rgba(6, 182, 212, 0.05)" : "none",
-    letterSpacing: "0.5px",
-  });
+  const inputClasses = "w-full h-12 bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-cyan-500/30 rounded-lg text-gray-900 dark:text-cyan-50 px-4 text-sm outline-none transition-all focus:bg-white dark:focus:bg-slate-900 focus:border-cyan-500 dark:focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 placeholder-gray-400 dark:placeholder-cyan-700/50";
 
   return (
-    // Outer centered card
-    <div
-      style={{
-        width: "100%",
-        maxWidth: "780px",
-        borderRadius: "20px",
-        overflow: "hidden",
-        boxShadow: "0 0 60px rgba(6,182,212,0.08), 0 20px 50px rgba(0,0,0,0.6)",
-        border: "1px solid rgba(6,182,212,0.12)",
-        display: "flex",
-        minHeight: "440px",
-      }}
-    >
-      {/* LEFT — Form Panel */}
-      <div
-        style={{
-          flex: "1",
-          background: "linear-gradient(160deg, #0d1a2a 0%, #0a1525 100%)",
-          padding: "44px 48px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
+    <div className="w-full max-w-[780px] rounded-[20px] overflow-hidden shadow-2xl border border-gray-200 dark:border-cyan-500/20 flex flex-col md:flex-row min-h-[440px] bg-white dark:bg-slate-950 transition-colors duration-300">
+      
+      {/* LEFT - Form Panel */}
+      <div className="flex-1 p-8 md:p-11 flex flex-col justify-between dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950">
+        
         {/* Back to home */}
         <Link
           href="/"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            color: "rgba(6,182,212,0.7)",
-            fontSize: "13px",
-            textDecoration: "none",
-            marginBottom: "28px",
-            transition: "color 0.2s",
-          }}
+          className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 dark:text-cyan-500/70 dark:hover:text-cyan-400 transition-colors mb-7"
         >
           <ArrowLeft size={14} /> Back to Home
         </Link>
 
         {/* Title */}
-        <div style={{ marginBottom: "32px" }}>
-          <h1
-            style={{
-              fontSize: "42px",
-              fontWeight: "900",
-              letterSpacing: "6px",
-              textTransform: "uppercase",
-              color: "#06B6D4",
-              textShadow: "0 0 20px rgba(6,182,212,0.5), 0 0 40px rgba(6,182,212,0.25)",
-              lineHeight: 1,
-              marginBottom: "8px",
-            }}
-          >
+        <div className="mb-8">
+          <h1 className="text-4xl font-black tracking-widest uppercase text-gray-900 dark:text-cyan-400 drop-shadow-sm dark:drop-shadow-[0_0_15px_rgba(6,182,212,0.4)] leading-none mb-2">
             LOGIN
           </h1>
-          <p style={{ color: "rgba(6,182,212,0.5)", fontSize: "13px", letterSpacing: "2px" }}>
+          <p className="text-gray-500 dark:text-cyan-500/50 text-xs tracking-widest uppercase">
             Welcome back, Commander.
           </p>
         </div>
 
         {/* Error */}
         {error && (
-          <div
-            style={{
-              background: "rgba(239,68,68,0.08)",
-              border: "1px solid rgba(239,68,68,0.3)",
-              color: "#EF4444",
-              padding: "10px 14px",
-              borderRadius: "8px",
-              fontSize: "13px",
-              marginBottom: "16px",
-            }}
-          >
+          <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 px-3.5 py-2.5 rounded-lg text-sm mb-4">
             {error}
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
           <input
             type="email"
             placeholder="Email Address"
@@ -149,35 +86,22 @@ export default function SignInForm() {
             required
             autoComplete="email"
             onChange={(e) => setEmail(e.target.value)}
-            onFocus={() => setFocusField("email")}
-            onBlur={() => setFocusField(null)}
-            style={glowInputStyle("email")}
+            className={inputClasses}
           />
 
-          <div style={{ position: "relative" }}>
+          <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={password}
               required
               onChange={(e) => setPassword(e.target.value)}
-              onFocus={() => setFocusField("password")}
-              onBlur={() => setFocusField(null)}
-              style={{ ...glowInputStyle("password"), paddingRight: "48px" }}
+              className={`${inputClasses} pr-12`}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: "absolute",
-                right: "14px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                background: "none",
-                border: "none",
-                color: "rgba(6,182,212,0.5)",
-                cursor: "pointer",
-              }}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-cyan-500/50 dark:hover:text-cyan-400 transition-colors"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -187,105 +111,43 @@ export default function SignInForm() {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: "100%",
-              height: "50px",
-              borderRadius: "8px",
-              background: loading
-                ? "rgba(6,182,212,0.3)"
-                : "linear-gradient(90deg, #06B6D4, #0891B2)",
-              border: "none",
-              color: "#fff",
-              fontWeight: "700",
-              fontSize: "14px",
-              letterSpacing: "4px",
-              textTransform: "uppercase",
-              cursor: loading ? "not-allowed" : "pointer",
-              boxShadow: "0 0 20px rgba(6,182,212,0.35)",
-              transition: "all 0.3s ease",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-              marginTop: "4px",
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 30px rgba(6,182,212,0.55)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.transform = "";
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 20px rgba(6,182,212,0.35)";
-            }}
+            className="w-full h-12 rounded-lg font-bold text-white text-sm tracking-widest uppercase flex items-center justify-center gap-2 mt-2 transition-all active:scale-[0.98] bg-cyan-600 hover:bg-cyan-700 dark:bg-gradient-to-r dark:from-cyan-500 dark:to-cyan-600 dark:hover:from-cyan-400 dark:hover:to-cyan-500 shadow-md shadow-cyan-600/20 dark:shadow-[0_0_20px_rgba(6,182,212,0.3)] dark:hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] disabled:opacity-70"
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : "INITIATE LOGIN"}
           </button>
         </form>
 
         {/* Footer */}
-        <p style={{ marginTop: "20px", fontSize: "13px", color: "rgba(255,255,255,0.3)", textAlign: "center" }}>
+        <p className="mt-6 text-xs text-center text-gray-500 dark:text-white/40">
           New User?{" "}
           <Link
             href="/sign-up"
-            style={{ color: "#06B6D4", textDecoration: "none", fontWeight: "600" }}
+            className="font-semibold text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors"
           >
             Initialize Protocol
           </Link>
         </p>
       </div>
 
-      {/* RIGHT — Branding Panel */}
-      <div
-        style={{
-          width: "280px",
-          flexShrink: 0,
-          background: "linear-gradient(160deg, #091523 0%, #0c1e30 100%)",
-          borderLeft: "1px solid rgba(6,182,212,0.1)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "40px 30px",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Decorative glow circle */}
-        <div style={{
-          position: "absolute",
-          width: "300px",
-          height: "300px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%)",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-        }} />
+      {/* RIGHT - Branding Panel */}
+      <div className="hidden md:flex w-[280px] shrink-0 border-l border-gray-100 dark:border-cyan-500/10 flex-col items-center justify-center p-8 relative overflow-hidden bg-gray-50 dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950">
+        
+        {/* Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-cyan-500/5 dark:bg-cyan-500/10 blur-2xl" />
 
-        {/* Corner brackets */}
-        <div style={{ position: "absolute", top: "20px", left: "20px", width: "20px", height: "20px", borderTop: "2px solid rgba(6,182,212,0.6)", borderLeft: "2px solid rgba(6,182,212,0.6)" }} />
-        <div style={{ position: "absolute", top: "20px", right: "20px", width: "20px", height: "20px", borderTop: "2px solid rgba(6,182,212,0.6)", borderRight: "2px solid rgba(6,182,212,0.6)" }} />
-        <div style={{ position: "absolute", bottom: "20px", left: "20px", width: "20px", height: "20px", borderBottom: "2px solid rgba(6,182,212,0.6)", borderLeft: "2px solid rgba(6,182,212,0.6)" }} />
-        <div style={{ position: "absolute", bottom: "20px", right: "20px", width: "20px", height: "20px", borderBottom: "2px solid rgba(6,182,212,0.6)", borderRight: "2px solid rgba(6,182,212,0.6)" }} />
+        {/* Brackets */}
+        <div className="absolute top-5 left-5 w-5 h-5 border-t-2 border-l-2 border-cyan-500/30 dark:border-cyan-500/60" />
+        <div className="absolute top-5 right-5 w-5 h-5 border-t-2 border-r-2 border-cyan-500/30 dark:border-cyan-500/60" />
+        <div className="absolute bottom-5 left-5 w-5 h-5 border-b-2 border-l-2 border-cyan-500/30 dark:border-cyan-500/60" />
+        <div className="absolute bottom-5 right-5 w-5 h-5 border-b-2 border-r-2 border-cyan-500/30 dark:border-cyan-500/60" />
 
-        <div style={{ position: "relative", textAlign: "center" }}>
-          <p
-            style={{
-              fontSize: "38px",
-              fontWeight: "900",
-              letterSpacing: "8px",
-              textTransform: "uppercase",
-              color: "#06B6D4",
-              textShadow: "0 0 25px rgba(6,182,212,0.6), 0 0 60px rgba(6,182,212,0.25)",
-              lineHeight: "1.15",
-            }}
-          >
+        <div className="relative text-center flex flex-col items-center">
+          <ShieldCheck className="w-16 h-16 mb-4 text-cyan-600 dark:text-cyan-400 opacity-80" />
+          <p className="text-3xl font-black tracking-widest uppercase text-gray-900 dark:text-cyan-400 drop-shadow-[0_0_10px_rgba(6,182,212,0.2)] dark:drop-shadow-[0_0_20px_rgba(6,182,212,0.5)] leading-[1.15]">
             SYSTEM<br />SECURE
           </p>
-          <div style={{ width: "60px", height: "2px", background: "linear-gradient(90deg, transparent, #06B6D4, transparent)", margin: "20px auto 0" }} />
-          <p style={{ color: "rgba(6,182,212,0.4)", fontSize: "11px", letterSpacing: "3px", marginTop: "14px", textTransform: "uppercase" }}>
+          <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-cyan-500 to-transparent my-5 opacity-50 dark:opacity-100" />
+          <p className="text-gray-500 dark:text-cyan-500/50 text-[10px] tracking-widest uppercase">
             TransitTrack v2.0
           </p>
         </div>

@@ -7,13 +7,9 @@
  */
 
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { db } from "../lib/db";
 import * as schema from "../lib/db/schema";
 import { nanoid } from "nanoid";
-
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle(sql, { schema });
 
 // ─── Bus Stops — Jalandhar, Punjab ─────────────────────────────────────────
 

@@ -33,28 +33,7 @@ const COLORS = [
   "#F59E0B", "#EF4444", "#EC4899", "#3B82F6",
 ];
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  height: "42px",
-  background: "#0f172a",
-  border: "1px solid #374151",
-  borderRadius: "8px",
-  color: "#F9FAFB",
-  padding: "0 12px",
-  fontSize: "14px",
-  outline: "none",
-  transition: "border-color 0.2s",
-};
 
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: "11px",
-  fontWeight: 700,
-  textTransform: "uppercase" as const,
-  letterSpacing: "0.08em",
-  color: "#6B7280",
-  marginBottom: "6px",
-};
 
 export default function EditRouteDialog({ route, allStops }: Props) {
   const router = useRouter();
@@ -64,8 +43,8 @@ export default function EditRouteDialog({ route, allStops }: Props) {
   const [tab, setTab]           = useState<"info" | "stops">("info");
 
   // ── Info fields ───────────────────────────────────────
-  const [name, setName]        = useState(route.name);
-  const [number, setNumber]    = useState(route.number);
+  const [name, setName]        = useState(route.name ?? "");
+  const [number, setNumber]    = useState(route.number ?? "");
   const [color, setColor]      = useState(route.color);
   const [status, setStatus]    = useState(route.status);
   const [description, setDesc] = useState(route.description ?? "");
@@ -304,19 +283,12 @@ export default function EditRouteDialog({ route, allStops }: Props) {
     return (
       <button
         onClick={() => setTab(id)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-        style={{
-          background: active ? "#6366F1" : "#0f172a",
-          color: active ? "#fff" : "#9CA3AF",
-          border: `1px solid ${active ? "#6366F1" : "#374151"}`,
-          cursor: "pointer",
-        }}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${active ? "bg-emerald-600 text-white border-emerald-600" : "bg-muted text-muted-foreground border-border hover:bg-muted/80"}`}
       >
         {label}
         {count !== undefined && (
           <span
-            className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
-            style={{ background: active ? "rgba(255,255,255,0.2)" : "#1f2937", color: active ? "#fff" : "#6B7280" }}
+            className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${active ? "bg-white/20 text-white" : "bg-muted-foreground/20 text-muted-foreground"}`}
           >
             {count}
           </span>
@@ -333,15 +305,15 @@ export default function EditRouteDialog({ route, allStops }: Props) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col" style={{ background: "#111827", border: "1px solid #374151" }}>
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col bg-card border-border">
         <DialogHeader className="shrink-0">
-          <DialogTitle style={{ color: "#F9FAFB" }}>
+          <DialogTitle className="text-foreground">
             Edit Route{" "}
-            <span className="ml-1 px-2 py-0.5 rounded text-sm font-bold" style={{ background: "#1f2937", color: route.color, border: "1px solid #374151" }}>
+            <span className="ml-1 px-2 py-0.5 rounded text-sm font-bold bg-muted border border-border" style={{ color: route.color }}>
               {route.number}
             </span>
           </DialogTitle>
-          <p className="text-sm" style={{ color: "#9CA3AF" }}>{route.name}</p>
+          <p className="text-sm text-muted-foreground">{route.name}</p>
         </DialogHeader>
 
         {/* Tab pills */}
@@ -354,23 +326,21 @@ export default function EditRouteDialog({ route, allStops }: Props) {
         {tab === "info" && (
           <div className="flex-1 overflow-y-auto space-y-4 pr-1 mt-1">
             <div>
-              <label style={labelStyle}>Route Name</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} style={inputStyle}
-                placeholder="e.g. ISBT ↔ Urban Estate"
-                onFocus={(e) => (e.currentTarget.style.borderColor = "#6366F1")}
-                onBlur={(e)  => (e.currentTarget.style.borderColor = "#374151")} />
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Route Name</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} 
+                className="w-full h-10 bg-muted border border-border rounded-lg px-3 text-sm text-foreground outline-none focus:border-emerald-500 transition-colors"
+                placeholder="e.g. ISBT ↔ Urban Estate" />
             </div>
             <div>
-              <label style={labelStyle}>Route Number</label>
-              <input value={number} onChange={(e) => setNumber(e.target.value)} style={inputStyle}
-                placeholder="e.g. JL-1"
-                onFocus={(e) => (e.currentTarget.style.borderColor = "#6366F1")}
-                onBlur={(e)  => (e.currentTarget.style.borderColor = "#374151")} />
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Route Number</label>
+              <input value={number} onChange={(e) => setNumber(e.target.value)}
+                className="w-full h-10 bg-muted border border-border rounded-lg px-3 text-sm text-foreground outline-none focus:border-emerald-500 transition-colors"
+                placeholder="e.g. JL-1" />
             </div>
 
             {/* Color */}
             <div>
-              <label style={labelStyle}>Route Color</label>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Route Color</label>
               <div className="flex items-center gap-2 flex-wrap">
                 {COLORS.map((c) => (
                   <button key={c} onClick={() => setColor(c)}
@@ -387,17 +357,15 @@ export default function EditRouteDialog({ route, allStops }: Props) {
 
             {/* Status */}
             <div>
-              <label style={labelStyle}>Status</label>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Status</label>
               <div className="grid grid-cols-3 gap-2">
                 {STATUS_OPTIONS.map((s) => {
-                  const c = { active: { bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.5)", text: "#22C55E" },
-                    inactive: { bg: "rgba(107,114,128,0.1)", border: "#374151", text: "#9CA3AF" },
-                    suspended: { bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.5)", text: "#EF4444" } }[s];
+                  const c = { active: { bg: "bg-emerald-500/10", border: "border-emerald-500/30", text: "text-emerald-600 dark:text-emerald-400" },
+                    inactive: { bg: "bg-muted", border: "border-border", text: "text-muted-foreground" },
+                    suspended: { bg: "bg-rose-500/10", border: "border-rose-500/30", text: "text-rose-600 dark:text-rose-400" } }[s];
                   const sel = status === s;
                   return (
-                    <button key={s} onClick={() => setStatus(s)} className="py-2 rounded-lg text-xs font-bold capitalize"
-                      style={{ background: sel ? c!.bg : "#0f172a", border: `1px solid ${sel ? c!.border : "#374151"}`,
-                        color: sel ? c!.text : "#6B7280", cursor: "pointer" }}>
+                    <button key={s} onClick={() => setStatus(s)} className={`py-2 rounded-lg text-xs font-bold capitalize border transition-all ${sel ? `${c!.bg} ${c!.border} ${c!.text}` : "bg-muted/50 border-border text-muted-foreground"}`}>
                       {s}
                     </button>
                   );
@@ -407,12 +375,10 @@ export default function EditRouteDialog({ route, allStops }: Props) {
 
             {/* Description */}
             <div>
-              <label style={labelStyle}>Description (optional)</label>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Description (optional)</label>
               <textarea value={description} onChange={(e) => setDesc(e.target.value)} rows={2}
                 placeholder="Short notes about this route..."
-                style={{ ...inputStyle, height: "auto", padding: "10px 12px", resize: "none" as const }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "#6366F1")}
-                onBlur={(e)  => (e.currentTarget.style.borderColor = "#374151")} />
+                className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-emerald-500 transition-colors resize-none" />
             </div>
           </div>
         )}
@@ -427,7 +393,7 @@ export default function EditRouteDialog({ route, allStops }: Props) {
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <div className="relative">
-                  <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3" style={{ color: "#22C55E" }} />
+                  <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-emerald-500" />
                   <input
                     value={autoStart}
                     onChange={(e) => {
@@ -435,17 +401,15 @@ export default function EditRouteDialog({ route, allStops }: Props) {
                       fetchSuggestions(e.target.value, "start");
                     }}
                     placeholder="Start City"
-                    style={{ ...inputStyle, paddingLeft: "28px", height: "38px", fontSize: "12px" }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = "#6366F1")}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = "#374151")}
+                    className="w-full h-10 bg-muted border border-border rounded-lg pl-8 pr-3 text-sm text-foreground outline-none focus:border-emerald-500 transition-colors"
                   />
                   {startSuggestions.length > 0 && (
-                    <div className="absolute top-full left-0 w-full mt-1 z-50 rounded-lg shadow-xl overflow-hidden border border-[#374151]" style={{ background: "#0f172a" }}>
+                    <div className="absolute top-full left-0 w-full mt-1 z-50 rounded-lg shadow-xl overflow-hidden border border-border bg-popover">
                       {startSuggestions.map((f) => (
                         <button
                           key={f.id}
-                          className="w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
-                          style={{ color: "#9CA3AF", cursor: "pointer" }}
+                          className="w-full text-left px-3 py-2 text-[11px] hover:bg-muted transition-colors border-b border-border last:border-0"
+                          style={{ color: "var(--muted-foreground)", cursor: "pointer" }}
                           onClick={() => {
                             setAutoStart(f.text);
                             setStartSuggestions([]);
@@ -458,7 +422,7 @@ export default function EditRouteDialog({ route, allStops }: Props) {
                   )}
                 </div>
                 <div className="relative">
-                  <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3" style={{ color: "#A855F7" }} />
+                  <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-purple-500" />
                   <input
                     value={autoEnd}
                     onChange={(e) => {
@@ -466,17 +430,15 @@ export default function EditRouteDialog({ route, allStops }: Props) {
                       fetchSuggestions(e.target.value, "end");
                     }}
                     placeholder="End City"
-                    style={{ ...inputStyle, paddingLeft: "28px", height: "38px", fontSize: "12px" }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = "#6366F1")}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = "#374151")}
+                    className="w-full h-10 bg-muted border border-border rounded-lg pl-8 pr-3 text-sm text-foreground outline-none focus:border-emerald-500 transition-colors"
                   />
                   {endSuggestions.length > 0 && (
-                    <div className="absolute top-full left-0 w-full mt-1 z-50 rounded-lg shadow-xl overflow-hidden border border-[#374151]" style={{ background: "#0f172a" }}>
+                    <div className="absolute top-full left-0 w-full mt-1 z-50 rounded-lg shadow-xl overflow-hidden border border-border bg-popover">
                       {endSuggestions.map((f) => (
                         <button
                           key={f.id}
-                          className="w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
-                          style={{ color: "#9CA3AF", cursor: "pointer" }}
+                          className="w-full text-left px-3 py-2 text-[11px] hover:bg-muted transition-colors border-b border-border last:border-0"
+                          style={{ color: "var(--muted-foreground)", cursor: "pointer" }}
                           onClick={() => {
                             setAutoEnd(f.text);
                             setEndSuggestions([]);
@@ -505,37 +467,35 @@ export default function EditRouteDialog({ route, allStops }: Props) {
                   ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Detecting stops...</>
                   : <><Wand2 className="h-3.5 w-3.5" /> Generate Stops Automatically</>}
               </button>
-              <p className="text-[10px] text-center" style={{ color: "#6B7280" }}>
+              <p className="text-[10px] text-center text-muted-foreground">
                 Uses Mapbox Directions to detect ~10 towns between the two cities
               </p>
             </div>
 
             {/* Search pool */}
             <div>
-              <label style={labelStyle}>Add Stops from Pool</label>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Add Stops from Pool</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: "#6B7280" }} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <input
                   value={stopSearch}
                   onChange={(e) => setStopSearch(e.target.value)}
                   placeholder="Type stop name to search..."
-                  style={{ ...inputStyle, paddingLeft: "36px" }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#6366F1")}
-                  onBlur={(e)  => (e.currentTarget.style.borderColor = "#374151")}
+                  className="w-full h-10 bg-muted border border-border rounded-lg pl-9 pr-3 text-sm text-foreground outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
               {/* Dropdown results */}
               {stopSearch && (
-                <div className="mt-1 rounded-lg overflow-hidden max-h-36 overflow-y-auto" style={{ border: "1px solid #374151", background: "#0f172a" }}>
+                <div className="mt-1 rounded-lg overflow-hidden max-h-36 overflow-y-auto border border-border bg-popover">
                   {filteredPool.length === 0 ? (
-                    <p className="text-xs text-center py-3" style={{ color: "#6B7280" }}>No stops match</p>
+                    <p className="text-xs text-center py-3 text-muted-foreground">No stops match</p>
                   ) : (
                     filteredPool.map((s) => (
                       <button
                         key={s.id}
                         onClick={() => addStop(s)}
-                        className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-white/5 transition-colors"
-                        style={{ color: "#F9FAFB", cursor: "pointer", borderBottom: "1px solid #1f2937" }}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors"
+                        style={{ color: "var(--foreground)", cursor: "pointer", borderBottom: "1px solid var(--border)" }}
                       >
                         <Plus className="h-3.5 w-3.5 shrink-0" style={{ color: "#6366F1" }} />
                         {s.name}
@@ -548,23 +508,21 @@ export default function EditRouteDialog({ route, allStops }: Props) {
 
             {/* Ordered stop list */}
             <div className="flex-1 overflow-y-auto">
-              <label style={{ ...labelStyle, marginBottom: "8px" }}>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                 Stop Order ({orderedStops.length} stops) — drag ↑↓ to reorder
               </label>
               {orderedStops.length === 0 ? (
-                <div className="text-center py-10 rounded-xl" style={{ background: "#0f172a", border: "1px dashed #374151" }}>
-                  <p className="text-sm" style={{ color: "#6B7280" }}>No stops assigned yet.</p>
-                  <p className="text-xs mt-1" style={{ color: "#374151" }}>Search and add stops above.</p>
+                <div className="text-center py-10 rounded-xl bg-muted/50 border border-border border-dashed">
+                  <p className="text-sm text-muted-foreground">No stops assigned yet.</p>
+                  <p className="text-xs mt-1 text-muted-foreground/60">Search and add stops above.</p>
                 </div>
               ) : (
                 <div className="space-y-1.5">
                   {orderedStops.map((stop, idx) => (
                     <div
                       key={stop.id}
-                      className="flex items-center gap-2 p-2.5 rounded-xl"
+                      className="flex items-center gap-2 p-2.5 rounded-xl bg-muted border border-border"
                       style={{
-                        background: "#0f172a",
-                        border: "1px solid #374151",
                         borderLeft: `3px solid ${idx === 0 ? "#22C55E" : idx === orderedStops.length - 1 ? "#A855F7" : route.color}`,
                       }}
                     >
@@ -577,7 +535,7 @@ export default function EditRouteDialog({ route, allStops }: Props) {
                       </div>
 
                       {/* Stop name */}
-                      <span className="flex-1 text-sm font-medium truncate" style={{ color: "#F9FAFB" }}>{stop.name}</span>
+                      <span className="flex-1 text-sm font-medium truncate text-foreground">{stop.name}</span>
 
                       {/* Tags */}
                       {idx === 0 && (
@@ -608,20 +566,18 @@ export default function EditRouteDialog({ route, allStops }: Props) {
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t shrink-0 mt-2" style={{ borderColor: "#374151" }}>
+        <div className="flex items-center justify-between pt-3 border-t shrink-0 mt-2 border-border">
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg"
-            style={{ color: "#EF4444", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", cursor: deleting ? "not-allowed" : "pointer" }}
+            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg text-rose-500 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 disabled:opacity-50"
           >
             {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
             Delete Route
           </button>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving} className="gap-1.5"
-              style={{ background: "linear-gradient(135deg, #6366F1, #A855F7)", border: "none", color: "#fff", cursor: saving ? "not-allowed" : "pointer" }}>
+            <Button onClick={handleSave} disabled={saving} className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-md">
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               Save All
             </Button>

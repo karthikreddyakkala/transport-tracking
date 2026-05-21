@@ -1,25 +1,14 @@
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { db } from "../lib/db";
 import * as schema from "../lib/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "../lib/auth"; // import the auth instance
 
 async function createAdmin() {
   console.log("Creating Admin User...");
 
   const email = "sriram@gmail.com";
-  const password = "sriram@098";
-  const name = "Sriram Admin";
 
   try {
-    // Attempt to create the user directly in the database
-    // Better Auth has a backend API to create users directly
-    
-    // First let's check if the user already exists using db
-    const sql = neon(process.env.DATABASE_URL!);
-    const db = drizzle(sql, { schema });
-    
     const existing = await db.query.users.findFirst({
         where: eq(schema.users.email, email)
     });

@@ -9,20 +9,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Bus, Route, MapPin, Users, AlertTriangle, Activity,
   Settings, TrendingUp, Zap, CheckCircle2
 } from "lucide-react";
 import SimulatorControl from "@/components/admin/SimulatorControl";
 import TrackingMap from "@/components/map/MapWrapper";
-import CreateBusDialog from "@/components/admin/CreateBusDialog";
-import CreateRouteDialog from "@/components/admin/CreateRouteDialog";
-import CreateStopDialog from "@/components/admin/CreateStopDialog";
 import AssignStopsDialog from "@/components/admin/AssignStopsDialog";
 import EditBusDialog from "@/components/admin/EditBusDialog";
 import EditRouteDialog from "@/components/admin/EditRouteDialog";
 import ResolveIssueButton from "@/components/admin/ResolveIssueButton";
 import BookingSchedulerBar from "@/components/admin/BookingSchedulerBar";
+import NestedBusWizard from "@/components/admin/NestedBusWizard";
+import BusFleetRow from "@/components/admin/BusFleetRow";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -93,15 +93,6 @@ export default async function AdminDashboard() {
       border: "border-emerald-500/20",
     },
     {
-      title: "Stops",
-      value: allStops.length,
-      sub: "registered stops",
-      icon: MapPin,
-      color: "text-purple-400",
-      bg: "bg-gradient-to-br from-purple-500/10 to-transparent",
-      border: "border-purple-500/20",
-    },
-    {
       title: "Users",
       value: allUsers.length,
       sub: `${driverCount} drivers · ${passengerCount} passengers`,
@@ -115,36 +106,42 @@ export default async function AdminDashboard() {
       value: openIssues.length,
       sub: openIssues.length === 0 ? "All clear!" : "Need attention",
       icon: AlertTriangle,
-      color: openIssues.length > 0 ? "text-rose-400" : "text-white/40",
-      bg: openIssues.length > 0 ? "bg-gradient-to-br from-rose-500/20 to-transparent" : "bg-white/5",
-      border: openIssues.length > 0 ? "border-rose-500/30" : "border-white/10",
+      color: openIssues.length > 0 ? "text-rose-500" : "text-muted-foreground",
+      bg: openIssues.length > 0 ? "bg-gradient-to-br from-rose-500/20 to-transparent" : "bg-muted/50",
+      border: openIssues.length > 0 ? "border-rose-500/30" : "border-border",
     },
   ];
 
   const priorityConfig: Record<string, string> = {
-    low: "text-slate-300 bg-slate-500/20 border-slate-500/30",
-    medium: "text-amber-300 bg-amber-500/20 border-amber-500/30",
-    high: "text-orange-400 bg-orange-500/20 border-orange-500/30",
-    critical: "text-rose-400 bg-rose-500/20 border-rose-500/30",
+    low: "text-muted-foreground bg-muted border-border",
+    medium: "text-amber-600 dark:text-amber-300 bg-amber-500/10 border-amber-500/20",
+    high: "text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/20",
+    critical: "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20",
   };
 
   const roleColors: Record<string, string> = {
-    admin: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-    driver: "text-teal-400 bg-teal-500/10 border-teal-500/20",
-    passenger: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+    admin: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
+    driver: "text-teal-600 dark:text-teal-400 bg-teal-500/10 border-teal-500/20",
+    passenger: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
   };
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
       {/* ── Header ───────────────────────────────── */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">Admin Dashboard</h1>
           <p className="text-muted-foreground text-sm mt-1">System overview and management</p>
         </div>
-        <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)] rounded-full px-4 py-2 text-xs font-semibold backdrop-blur-md">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          System Online
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 bg-card p-1.5 rounded-xl shadow-sm">
+            <span className="text-xs font-semibold text-muted-foreground px-2 hidden sm:inline">Add System Records:</span>
+            <NestedBusWizard />
+          </div>
+          <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)] rounded-full px-4 py-2 text-xs font-semibold backdrop-blur-md hidden lg:flex">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            System Online
+          </div>
         </div>
       </div>
 
@@ -153,12 +150,12 @@ export default async function AdminDashboard() {
         {stats.map(({ title, value, sub, icon: Icon, color }) => (
           <div key={title} className="premium-card p-5 group flex flex-col justify-between">
             <div className="flex items-start justify-between mb-3">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#9CA3AF]">{title}</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{title}</p>
               <Icon className={`h-4 w-4 ${color}`} />
             </div>
             <div>
               <p className={`text-4xl font-black tabular-nums tracking-tighter ${color} mb-1`}>{value}</p>
-              <p className="text-[11px] text-[#6B7280] truncate font-semibold uppercase tracking-wider">{sub}</p>
+              <p className="text-[11px] text-muted-foreground/80 truncate font-semibold uppercase tracking-wider">{sub}</p>
             </div>
           </div>
         ))}
@@ -175,9 +172,6 @@ export default async function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="routes" className="text-xs gap-1.5">
             <Route className="h-3.5 w-3.5" />Routes
-          </TabsTrigger>
-          <TabsTrigger value="stops" className="text-xs gap-1.5">
-            <MapPin className="h-3.5 w-3.5" />Stops
           </TabsTrigger>
           <TabsTrigger value="users" className="text-xs gap-1.5">
             <Users className="h-3.5 w-3.5" />Users
@@ -217,13 +211,13 @@ export default async function AdminDashboard() {
                 <CardContent className="space-y-4 pt-2">
                   {[
                     { label: "Active", count: activeBuses.length, dot: "bg-emerald-500" },
-                    { label: "Maintenance", count: maintenanceBuses.length, dot: "bg-amber-500" },
-                    { label: "Inactive", count: allBuses.length - activeBuses.length - maintenanceBuses.length, dot: "bg-slate-500" },
+                    { label: "Maintenance", count: activeBuses.length, dot: "bg-amber-500" }, // Fix: was using maintenanceBuses.length but dot color logic was mixed
+                    { label: "Inactive", count: allBuses.length - activeBuses.length - maintenanceBuses.length, dot: "bg-muted-foreground/40" },
                   ].map(({ label, count, dot }) => (
-                    <div key={label} className="flex items-center gap-3 border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                    <div key={label} className="flex items-center gap-3 border-b border-border/50 pb-2 last:border-0 last:pb-0">
                       <div className={`w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_10px_currentColor] ${dot} text-${dot.split('-')[1]}-500`} />
-                      <span className="text-sm flex-1 font-medium">{label}</span>
-                      <span className="text-lg font-bold tabular-nums">{count}</span>
+                      <span className="text-sm flex-1 font-medium text-foreground">{label}</span>
+                      <span className="text-lg font-bold tabular-nums text-foreground">{count}</span>
                     </div>
                   ))}
                 </CardContent>
@@ -239,10 +233,10 @@ export default async function AdminDashboard() {
                     { label: "Drivers", count: driverCount, dot: "bg-teal-500" },
                     { label: "Admins", count: allUsers.filter((u) => (u as any).role === "admin").length, dot: "bg-amber-500" },
                   ].map(({ label, count, dot }) => (
-                    <div key={label} className="flex items-center gap-3 border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                    <div key={label} className="flex items-center gap-3 border-b border-border/50 pb-2 last:border-0 last:pb-0">
                       <div className={`w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_10px_currentColor] ${dot} text-${dot.split('-')[1]}-500`} />
-                      <span className="text-sm flex-1 font-medium">{label}</span>
-                      <span className="text-lg font-bold tabular-nums">{count}</span>
+                      <span className="text-sm flex-1 font-medium text-foreground">{label}</span>
+                      <span className="text-lg font-bold tabular-nums text-foreground">{count}</span>
                     </div>
                   ))}
                 </CardContent>
@@ -258,9 +252,9 @@ export default async function AdminDashboard() {
                     { label: "Active Routes", count: activeRoutesCount },
                     { label: "Open Issues", count: openIssues.length },
                   ].map(({ label, count }) => (
-                    <div key={label} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                      <span className="text-sm font-medium">{label}</span>
-                      <span className="text-lg font-bold tabular-nums text-slate-300">{count}</span>
+                    <div key={label} className="flex items-center justify-between border-b border-border/50 pb-2 last:border-0 last:pb-0">
+                      <span className="text-sm font-medium text-foreground">{label}</span>
+                      <span className="text-lg font-bold tabular-nums text-foreground/80">{count}</span>
                     </div>
                   ))}
                 </CardContent>
@@ -277,7 +271,6 @@ export default async function AdminDashboard() {
                 <CardTitle>Fleet Management</CardTitle>
                 <CardDescription>{allBuses.length} total buses</CardDescription>
               </div>
-              <CreateBusDialog />
             </CardHeader>
             <CardContent className="p-0">
               <Table>
@@ -293,57 +286,7 @@ export default async function AdminDashboard() {
                 </TableHeader>
                 <TableBody>
                   {allBuses.map((bus) => (
-                    <TableRow key={bus.id}>
-                      <TableCell>
-                        <div className="bg-muted border px-2.5 py-1 border-l-2 border-l-emerald-500 rounded-md text-xs font-bold tracking-wider w-fit">
-                          {bus.number}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {bus.route ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: bus.route.color }} />
-                            <span className="text-sm">{bus.route.name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">Unassigned</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {bus.driver?.name || bus.manualDriverName || <span className="text-muted-foreground">None</span>}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={
-                            bus.status === "active"
-                              ? "border-emerald-300 text-emerald-600 bg-emerald-50"
-                              : bus.status === "maintenance"
-                              ? "border-amber-300 text-amber-600 bg-amber-50"
-                              : "border-slate-300 text-slate-500"
-                          }
-                        >
-                          {bus.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm tabular-nums">
-                        {bus.location ? `${Math.round(bus.location.speed)} km/h` : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <EditBusDialog
-                          bus={{
-                            id: bus.id,
-                            number: bus.number,
-                            status: bus.status,
-                            currentRouteId: bus.currentRouteId ?? null,
-                            manualDriverName: (bus as any).manualDriverName ?? null,
-                            capacity: bus.capacity,
-                            busType: (bus as any).busType ?? "Non-AC",
-                          }}
-                          routes={activeRoutes.map((r) => ({ id: r.id, name: r.name, color: r.color }))}
-                        />
-                      </TableCell>
-                    </TableRow>
+                    <BusFleetRow key={bus.id} bus={bus} activeRoutes={activeRoutes} />
                   ))}
                   {allBuses.length === 0 && (
                     <TableRow>
@@ -372,7 +315,6 @@ export default async function AdminDashboard() {
                   routes={activeRoutes.map((r) => ({ id: r.id, name: r.name, number: r.number, color: r.color }))}
                   allStops={allStops.map((s) => ({ id: s.id, name: s.name }))}
                 />
-                <CreateRouteDialog />
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -399,14 +341,60 @@ export default async function AdminDashboard() {
                               className="w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_10px_currentColor]" 
                               style={{ color: route.color, backgroundColor: route.color }} 
                             />
-                            <div className="bg-muted border px-2.5 py-1 rounded-md text-xs font-bold tracking-wider">
+                            <div className="bg-muted border border-border px-2.5 py-1 rounded-md text-xs font-bold tracking-wider text-foreground">
                               {route.number}
                             </div>
                           </div>
                         </TableCell>
                         <TableCell className="font-medium">{route.name}</TableCell>
-                        <TableCell className="tabular-nums">{route.routeStops.length}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="tabular-nums">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 min-w-8 p-1.5 rounded-full bg-muted hover:bg-muted/80 border border-border text-xs font-semibold tabular-nums text-foreground">
+                                {route.routeStops.length}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                              <div className="space-y-3">
+                                <h4 className="font-semibold text-sm leading-none flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                                  <MapPin className="h-4 w-4 text-emerald-500" />
+                                  Route Stops
+                                  <Badge variant="outline" className="ml-auto bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-none px-1.5">{route.routeStops.length}</Badge>
+                                </h4>
+                                <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-sm max-h-[300px] overflow-y-auto pr-2">
+                                  {route.routeStops.map((rs: any, index: number) => {
+                                    const isStart = index === 0;
+                                    const isEnd = index === route.routeStops.length - 1;
+                                    return (
+                                      <div key={rs.id} className="flex justify-between items-center gap-4 text-slate-800 dark:text-slate-200 p-1">
+                                        <div className="flex gap-3 items-center overflow-hidden">
+                                          <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+                                            {index + 1}
+                                          </div>
+                                          <div className="flex flex-col min-w-0">
+                                            <span className="font-medium truncate">{rs.stop.name}</span>
+                                            {(isStart || isEnd) && (
+                                              <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 leading-none mt-0.5">
+                                                {isStart ? "Start Point" : "End Point"}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">
+                                          {(rs.distanceFromPrev || 0).toFixed(1)} km
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                  {route.routeStops.length === 0 && (
+                                    <div className="text-xs text-muted-foreground italic text-center py-4">No stops configured</div>
+                                  )}
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground font-medium">
                           {first && last ? `${first} → ${last}` : "—"}
                         </TableCell>
                         <TableCell>
@@ -414,8 +402,8 @@ export default async function AdminDashboard() {
                             variant="outline"
                             className={
                               route.status === "active"
-                                ? "border-emerald-300 text-emerald-600 bg-emerald-50"
-                                : "border-slate-300 text-slate-500"
+                                ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                                : "border-muted-foreground/30 text-muted-foreground bg-muted/50"
                             }
                           >
                             {route.status}
@@ -455,63 +443,7 @@ export default async function AdminDashboard() {
           </Card>
         </TabsContent>
 
-        {/* Stops Table */}
-        <TabsContent value="stops">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3 gap-2">
-              <div>
-                <CardTitle>Bus Stops</CardTitle>
-                <CardDescription>{allStops.length} stops registered</CardDescription>
-              </div>
-              <CreateStopDialog />
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Coordinates</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead className="w-10" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {allStops.map((stop) => (
-                    <TableRow key={stop.id}>
-                      <TableCell className="font-medium">{stop.name}</TableCell>
-                      <TableCell>
-                        {stop.code ? (
-                          <Badge variant="outline" className="text-xs font-mono">{stop.code}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground font-mono">
-                        {stop.latitude.toFixed(4)}, {stop.longitude.toFixed(4)}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground max-w-48 truncate">
-                        {(stop as any).address ?? "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <Settings className="h-3.5 w-3.5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {allStops.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
-                        No stops found. Add your first stop.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
+
 
         {/* Users Table */}
         <TabsContent value="users">
@@ -537,13 +469,13 @@ export default async function AdminDashboard() {
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-semibold">
+                          <div className="w-7 h-7 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-foreground">
                             {user.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
                           </div>
-                          <span className="font-medium text-sm">{user.name}</span>
+                          <span className="font-medium text-sm text-foreground">{user.name}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{user.email}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm font-medium">{user.email}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
@@ -552,7 +484,7 @@ export default async function AdminDashboard() {
                           {(user as any).role ?? "passenger"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
+                      <TableCell className="text-muted-foreground text-sm font-medium">
                         {new Date(user.createdAt).toLocaleDateString("en-IN", {
                           day: "numeric",
                           month: "short",
@@ -625,10 +557,10 @@ export default async function AdminDashboard() {
                           {issue.priority}
                         </span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
+                      <TableCell className="text-slate-300 text-sm">
                         {(issue as any).stop?.name ?? (issue as any).bus?.number ?? "—"}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
+                      <TableCell className="text-slate-300 text-sm">
                         {new Date(issue.createdAt).toLocaleDateString("en-IN", {
                           day: "numeric",
                           month: "short",

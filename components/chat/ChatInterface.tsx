@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Loader2, Bot, User, Clock, Bus, MapPin, Flag } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
 
 interface Message {
   id: string;
@@ -119,7 +119,7 @@ export default function ChatInterface({ userId }: { userId?: string }) {
                   <p className="whitespace-pre-wrap">{msg.content}</p>
                 </div>
                 <p className="text-[10px] text-muted-foreground px-1">
-                  {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {formatTime(msg.timestamp)}
                 </p>
               </div>
 

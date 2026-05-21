@@ -2,13 +2,29 @@ import Pusher from "pusher";
 import PusherClient from "pusher-js";
 
 // Server-side Pusher instance
-export const pusherServer = new Pusher({
-  appId: process.env.PUSHER_APP_ID!,
-  key: process.env.PUSHER_KEY!,
-  secret: process.env.PUSHER_SECRET!,
-  cluster: process.env.PUSHER_CLUSTER!,
+const rawPusherServer = new Pusher({
+  appId: process.env.PUSHER_APP_ID || "dummy",
+  key: process.env.PUSHER_KEY || "dummy",
+  secret: process.env.PUSHER_SECRET || "dummy",
+  cluster: process.env.PUSHER_CLUSTER || "us2",
   useTLS: true,
 });
+
+export const pusherServer = {
+  ...rawPusherServer,
+  trigger: async (channel: string | string[], event: string, data: any, socketIdOrParams?: any) => {
+    try {
+      const appId = process.env.PUSHER_APP_ID;
+      if (!appId || appId === "your-app-id" || appId.includes("dummy")) {
+        // console.log(`[Pusher Mock] Triggered event "${event}" on channel "${channel}"`);
+        return;
+      }
+      return await rawPusherServer.trigger(channel, event, data, socketIdOrParams);
+    } catch (err: any) {
+      console.warn("[Pusher Error] Failed to broadcast event:", err.message);
+    }
+  }
+} as unknown as Pusher;
 
 // Client-side Pusher instance (singleton)
 let pusherClientInstance: PusherClient | null = null;
@@ -42,4 +58,5 @@ export const EVENTS = {
   DRIVER_RESPONSE: "driver-response",
   PASSENGER_NOTIFICATION: "passenger-notification",
   NEW_ISSUE: "new-issue",
+  STATUS_UPDATE: "status-update",
 } as const;

@@ -9,9 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-export default function CreateStopDialog() {
+export function CreateStopForm({ onSuccess, onCancel }: { onSuccess?: () => void, onCancel?: () => void }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", code: "", latitude: "", longitude: "", address: "" });
 
@@ -36,15 +35,53 @@ export default function CreateStopDialog() {
       });
       if (!res.ok) throw new Error();
       toast.success(`Stop "${form.name}" created.`);
-      setOpen(false);
       setForm({ name: "", code: "", latitude: "", longitude: "", address: "" });
       router.refresh();
+      onSuccess?.();
     } catch {
       toast.error("Failed to create stop.");
     } finally {
       setLoading(false);
     }
   }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+      <div className="space-y-1">
+        <Label>Stop Name *</Label>
+        <Input placeholder="e.g. MG Road Bus Stop" value={form.name} onChange={(e) => set("name", e.target.value)} required />
+      </div>
+      <div className="space-y-1">
+        <Label>Stop Code</Label>
+        <Input placeholder="e.g. MGR-01" value={form.code} onChange={(e) => set("code", e.target.value)} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label>Latitude *</Label>
+          <Input type="number" step="any" placeholder="12.9716" value={form.latitude} onChange={(e) => set("latitude", e.target.value)} required />
+        </div>
+        <div className="space-y-1">
+          <Label>Longitude *</Label>
+          <Input type="number" step="any" placeholder="77.5946" value={form.longitude} onChange={(e) => set("longitude", e.target.value)} required />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <Label>Address</Label>
+        <Input placeholder="Street address" value={form.address} onChange={(e) => set("address", e.target.value)} />
+      </div>
+      <div className="flex justify-end gap-2 pt-2">
+        {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+        <Button type="submit" disabled={loading}>
+          {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+          Create Stop
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+export default function CreateStopDialog() {
+  const [open, setOpen] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -55,37 +92,7 @@ export default function CreateStopDialog() {
         <DialogHeader>
           <DialogTitle>Add Bus Stop</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <div className="space-y-1">
-            <Label>Stop Name *</Label>
-            <Input placeholder="e.g. MG Road Bus Stop" value={form.name} onChange={(e) => set("name", e.target.value)} required />
-          </div>
-          <div className="space-y-1">
-            <Label>Stop Code</Label>
-            <Input placeholder="e.g. MGR-01" value={form.code} onChange={(e) => set("code", e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label>Latitude *</Label>
-              <Input type="number" step="any" placeholder="12.9716" value={form.latitude} onChange={(e) => set("latitude", e.target.value)} required />
-            </div>
-            <div className="space-y-1">
-              <Label>Longitude *</Label>
-              <Input type="number" step="any" placeholder="77.5946" value={form.longitude} onChange={(e) => set("longitude", e.target.value)} required />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <Label>Address</Label>
-            <Input placeholder="Street address" value={form.address} onChange={(e) => set("address", e.target.value)} />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-              Create Stop
-            </Button>
-          </div>
-        </form>
+        <CreateStopForm onSuccess={() => setOpen(false)} onCancel={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );

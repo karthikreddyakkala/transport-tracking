@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { routes } from "@/lib/db/schema";
+import { routes, buses } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -35,9 +35,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
+    // SQLite constraint workaround: Clear route reference from buses first
+    await db.update(buses).set({ currentRouteId: null }).where(eq(buses.currentRouteId, id));
+    
+    // Now safe to delete the route
     await db.delete(routes).where(eq(routes.id, id));
     return new NextResponse(null, { status: 204 });
-  } catch {
+  } catch (error) {
+    console.error("Failed to delete route:", error);
     return NextResponse.json({ error: "Failed to delete route" }, { status: 500 });
   }
 }

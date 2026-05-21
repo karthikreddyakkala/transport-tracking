@@ -17,14 +17,19 @@ export async function GET(req: NextRequest) {
         with: { location: true },
       });
 
+      if (!bus || !bus.currentRouteId) {
+        return NextResponse.json([]);
+      }
+
       const etas = await calculateETAs({
         busId,
         routeId: bus.currentRouteId,
-        currentLat: bus.location?.latitude ?? 0, // 0 is handled by calculator fallback
+        currentLat: bus.location?.latitude ?? 0, 
         currentLng: bus.location?.longitude ?? 0,
         currentSpeed: bus.location?.speed ?? 0,
         currentStopIndex: bus.location?.currentStopIndex ?? 0,
         isReverse: bus.location?.isReverse ?? false,
+        scheduledStartTime: bus.scheduledStartTime?.toISOString() || null,
       });
 
       return NextResponse.json(etas);

@@ -1,3 +1,4 @@
+import "./dns-hack.js";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {

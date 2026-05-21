@@ -18,9 +18,8 @@ const ROUTE_COLORS = [
 interface Stop { id: string; name: string; code?: string | null; latitude: number; longitude: number }
 interface Place { name: string; lng: number; lat: number }
 
-export default function CreateRouteDialog() {
+export function CreateRouteForm({ onSuccess, onCancel }: { onSuccess?: () => void, onCancel?: () => void }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [allStops, setAllStops] = useState<Stop[]>([]);
   const [selectedStops, setSelectedStops] = useState<Stop[]>([]);
@@ -39,9 +38,8 @@ export default function CreateRouteDialog() {
   const [suggestedVillages, setSuggestedVillages] = useState<Stop[]>([]);
 
   useEffect(() => {
-    if (!open) return;
     fetch("/api/stops").then((r) => r.json()).then(setAllStops).catch(() => {});
-  }, [open]);
+  }, []);
 
   // Geocoding effect
   useEffect(() => {
@@ -225,12 +223,13 @@ export default function CreateRouteDialog() {
       );
 
       toast.success(`Route "${generatedName}" created with ${selectedStops.length} stops.`);
-      setOpen(false);
+      
       setForm({ number: "", color: ROUTE_COLORS[0] });
       setStartQuery(""); setStartPlace(null);
       setEndQuery(""); setEndPlace(null);
       setSelectedStops([]);
       router.refresh();
+      onSuccess?.();
     } catch {
       toast.error("Failed to create route.");
     } finally {
@@ -239,203 +238,212 @@ export default function CreateRouteDialog() {
   }
 
   return (
+    <div className="flex flex-col h-full mt-2">
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Left Column: Details */}
+        <form id="route-form" onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1">
+            <Label>Route Number *</Label>
+            <Input placeholder="e.g. 0002" value={form.number} onChange={(e) => set("number", e.target.value)} required />
+          </div>
+
+          <div className="space-y-1 relative">
+            <Label>Start City *</Label>
+            <Input 
+              placeholder="e.g. vizag" 
+              value={startPlace ? startPlace.name : startQuery} 
+              onChange={(e) => { setStartQuery(e.target.value); setStartPlace(null); }} 
+              required 
+            />
+            {startSuggestions.length > 0 && (
+              <div className="absolute top-16 left-0 right-0 z-50 bg-background border rounded-lg shadow-xl overflow-hidden">
+                {startSuggestions.map((place, i) => (
+                  <div key={i} className="px-3 py-2 text-sm hover:bg-muted cursor-pointer flex items-center gap-2" onClick={() => { setStartPlace(place); setStartSuggestions([]); }}>
+                    <MapPin className="h-3 w-3 text-emerald-500" /> {place.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1 relative">
+            <Label>End City *</Label>
+            <Input 
+              placeholder="e.g. srikakulam" 
+              value={endPlace ? endPlace.name : endQuery} 
+              onChange={(e) => { setEndQuery(e.target.value); setEndPlace(null); }} 
+              required 
+            />
+            {endSuggestions.length > 0 && (
+              <div className="absolute top-16 left-0 right-0 z-50 bg-background border rounded-lg shadow-xl overflow-hidden">
+                {endSuggestions.map((place, i) => (
+                  <div key={i} className="px-3 py-2 text-sm hover:bg-muted cursor-pointer flex items-center gap-2" onClick={() => { setEndPlace(place); setEndSuggestions([]); }}>
+                    <MapPin className="h-3 w-3 text-red-500" /> {place.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <div className="pt-2 text-sm text-foreground/50 italic border-l-2 border-primary pl-3 ml-1 mb-2">
+            Generated Route Name: <span className="font-semibold text-foreground">{(startPlace || endPlace) ? `${startPlace?.name.split(',')[0].toUpperCase() || "..."}-${endPlace?.name.split(',')[0].toUpperCase() || "..."}` : "—"}</span>
+          </div>
+          <div className="space-y-2">
+            <Label>Route Color</Label>
+            <div className="flex gap-2 flex-wrap">
+              {ROUTE_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`w-7 h-7 rounded-full border-2 transition-all shadow-sm ${form.color === c ? "border-foreground scale-110" : "border-transparent opacity-80"}`}
+                  style={{ backgroundColor: c }}
+                  onClick={() => set("color", c)}
+                />
+              ))}
+            </div>
+          </div>
+        </form>
+
+        {/* Right Column: Stops Builder */}
+        <div className="space-y-4 border-l border-foreground/10 pl-6 flex flex-col h-full">
+          
+          <div className="flex flex-col gap-2">
+            <Label className="font-semibold text-primary">Normal Stop Search</Label>
+            <Input border-primary placeholder="Search any stop/village manually…" value={stopSearch} onChange={(e) => setStopSearch(e.target.value)} className="h-9 text-sm" />
+            {stopSearch && filtered.length > 0 && (
+              <ScrollArea className="max-h-36 border rounded-lg shadow-lg bg-background z-10 absolute mt-16 w-64">
+                {filtered.map((s) => (
+                  <button key={s.id} type="button" className="w-full text-left px-3 py-2 text-xs hover:bg-muted" onClick={() => addStop(s)}>
+                    {s.name}
+                  </button>
+                ))}
+              </ScrollArea>
+            )}
+          </div>
+
+          {suggestedVillages.length > 0 && (
+            <div className="bg-primary/5 border border-primary/20 p-2 rounded-lg">
+              <Label className="text-xs text-emerald-500 font-semibold mb-2 block">Found villages on this path mapping:</Label>
+              <div className="flex flex-wrap gap-2">
+                {suggestedVillages.map(village => (
+                  <button key={village.id} onClick={() => addStop(village)} className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-full hover:bg-emerald-500/20 transition-colors flex items-center gap-1">
+                    <Plus className="h-3 w-3" /> {village.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex-1 min-h-0 pt-2 flex flex-col">
+            <Label className="font-semibold mb-2">
+              Route Stops ({selectedStops.length + (startPlace ? 1 : 0) + (endPlace ? 1 : 0)})
+            </Label>
+            <ScrollArea className="h-[350px] w-full border rounded-lg p-2 bg-muted/10 pr-4">
+              {!startPlace && !endPlace && selectedStops.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-muted-foreground text-xs text-center p-4">
+                  Type a city on the left, check the suggested villages here, or search manually.
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  
+                  {/* START PLACE STUB */}
+                  {startPlace && (
+                    <div className="flex items-center gap-2 text-[11px] bg-emerald-500/10 border border-emerald-500/20 p-2 rounded-md shadow-sm">
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center font-bold bg-emerald-500 text-white">
+                        1
+                      </span>
+                      <span className="flex-1 truncate font-semibold text-emerald-700 dark:text-emerald-400">
+                        {startPlace.name.split(',')[0]} <span className="text-[9px] uppercase">(Start)</span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                         <div className="flex items-center gap-1 opacity-50">
+                           <Label className="text-[10px] text-muted-foreground">Arr:</Label>
+                           <Input disabled className="h-6 w-16 px-1 text-[10px]" value="—" />
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <Label className="text-[10px] text-muted-foreground">Dep:</Label>
+                           <Input type="time" className="h-6 w-20 px-1 text-[10px]" defaultValue="08:00" />
+                         </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* INTERMEDIATE STOPS */}
+                  {selectedStops.map((s, i) => (
+                    <div key={s.id} className="flex items-center gap-2 text-[11px] bg-background border p-2 rounded-md shadow-sm ml-4 border-l-4" style={{ borderLeftColor: form.color }}>
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center font-bold" style={{ backgroundColor: form.color, color: "#fff" }}>
+                        {startPlace ? i + 2 : i + 1}
+                      </span>
+                      <span className="flex-1 truncate font-semibold">{s.name}</span>
+                      <div className="flex items-center gap-2">
+                         <div className="flex items-center gap-1">
+                           <Label className="text-[10px] text-muted-foreground">Arr:</Label>
+                           <Input type="time" className="h-6 w-20 px-1 text-[10px]" defaultValue="09:00" />
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <Label className="text-[10px] text-muted-foreground">Dep:</Label>
+                           <Input type="time" className="h-6 w-20 px-1 text-[10px]" defaultValue="09:05" />
+                         </div>
+                      </div>
+                      <button type="button" onClick={() => removeStop(s.id)} className="text-muted-foreground hover:text-destructive shrink-0 ml-1">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* END PLACE STUB */}
+                  {endPlace && (
+                    <div className="flex items-center gap-2 text-[11px] bg-red-500/10 border border-red-500/20 p-2 rounded-md shadow-sm">
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center font-bold bg-red-500 text-white">
+                        {selectedStops.length + (startPlace ? 2 : 1)}
+                      </span>
+                      <span className="flex-1 truncate font-semibold text-red-700 dark:text-red-400">
+                        {endPlace.name.split(',')[0]} <span className="text-[9px] uppercase">(End)</span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                         <div className="flex items-center gap-1">
+                           <Label className="text-[10px] text-muted-foreground">Arr:</Label>
+                           <Input type="time" className="h-6 w-20 px-1 text-[10px]" defaultValue="18:00" />
+                         </div>
+                         <div className="flex items-center gap-1 opacity-50">
+                           <Label className="text-[10px] text-muted-foreground">Dep:</Label>
+                           <Input disabled className="h-6 w-16 px-1 text-[10px]" value="—" />
+                         </div>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4 border-t mt-4">
+        {onCancel && <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>}
+        <Button type="submit" form="route-form" disabled={loading} className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6">
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Confirm & Save Route
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export default function CreateRouteDialog() {
+  const [open, setOpen] = useState(false);
+
+  return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" className="gap-1 bg-primary text-primary-foreground"><Plus className="h-4 w-4" /> Add Route</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl border-white/10 dark:bg-zinc-950">
+      <DialogContent className="max-w-3xl border-border bg-background">
         <DialogHeader>
           <DialogTitle>Create New Route</DialogTitle>
         </DialogHeader>
-        
-        <div className="grid md:grid-cols-2 gap-6 mt-2">
-          {/* Left Column: Details */}
-          <form id="route-form" onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <Label>Route Number *</Label>
-              <Input placeholder="e.g. 0002" value={form.number} onChange={(e) => set("number", e.target.value)} required />
-            </div>
-
-            <div className="space-y-1 relative">
-              <Label>Start City *</Label>
-              <Input 
-                placeholder="e.g. vizag" 
-                value={startPlace ? startPlace.name : startQuery} 
-                onChange={(e) => { setStartQuery(e.target.value); setStartPlace(null); }} 
-                required 
-              />
-              {startSuggestions.length > 0 && (
-                <div className="absolute top-16 left-0 right-0 z-50 bg-background border rounded-lg shadow-xl overflow-hidden">
-                  {startSuggestions.map((place, i) => (
-                    <div key={i} className="px-3 py-2 text-sm hover:bg-muted cursor-pointer flex items-center gap-2" onClick={() => { setStartPlace(place); setStartSuggestions([]); }}>
-                      <MapPin className="h-3 w-3 text-emerald-500" /> {place.name}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-1 relative">
-              <Label>End City *</Label>
-              <Input 
-                placeholder="e.g. srikakulam" 
-                value={endPlace ? endPlace.name : endQuery} 
-                onChange={(e) => { setEndQuery(e.target.value); setEndPlace(null); }} 
-                required 
-              />
-              {endSuggestions.length > 0 && (
-                <div className="absolute top-16 left-0 right-0 z-50 bg-background border rounded-lg shadow-xl overflow-hidden">
-                  {endSuggestions.map((place, i) => (
-                    <div key={i} className="px-3 py-2 text-sm hover:bg-muted cursor-pointer flex items-center gap-2" onClick={() => { setEndPlace(place); setEndSuggestions([]); }}>
-                      <MapPin className="h-3 w-3 text-red-500" /> {place.name}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            <div className="pt-2 text-sm text-white/50 italic border-l-2 border-primary pl-3 ml-1 mb-2">
-              Generated Route Name: <span className="font-semibold text-white">{(startPlace || endPlace) ? `${startPlace?.name.split(',')[0].toUpperCase() || "..."}-${endPlace?.name.split(',')[0].toUpperCase() || "..."}` : "—"}</span>
-            </div>
-            <div className="space-y-2">
-              <Label>Route Color</Label>
-              <div className="flex gap-2 flex-wrap">
-                {ROUTE_COLORS.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    className={`w-7 h-7 rounded-full border-2 transition-all shadow-sm ${form.color === c ? "border-foreground scale-110" : "border-transparent opacity-80"}`}
-                    style={{ backgroundColor: c }}
-                    onClick={() => set("color", c)}
-                  />
-                ))}
-              </div>
-            </div>
-          </form>
-
-          {/* Right Column: Stops Builder */}
-          <div className="space-y-4 border-l border-white/10 pl-6 flex flex-col h-full">
-            
-            <div className="flex flex-col gap-2">
-              <Label className="font-semibold text-primary">Normal Stop Search</Label>
-              <Input placeholder="Search any stop/village manually…" value={stopSearch} onChange={(e) => setStopSearch(e.target.value)} className="h-9 text-sm border-primary/50" />
-              {stopSearch && filtered.length > 0 && (
-                <ScrollArea className="max-h-36 border rounded-lg shadow-lg bg-background z-10 absolute mt-16 w-64">
-                  {filtered.map((s) => (
-                    <button key={s.id} type="button" className="w-full text-left px-3 py-2 text-xs hover:bg-muted" onClick={() => addStop(s)}>
-                      {s.name}
-                    </button>
-                  ))}
-                </ScrollArea>
-              )}
-            </div>
-
-            {suggestedVillages.length > 0 && (
-              <div className="bg-primary/5 border border-primary/20 p-2 rounded-lg">
-                <Label className="text-xs text-emerald-500 font-semibold mb-2 block">Found villages on this path mapping:</Label>
-                <div className="flex flex-wrap gap-2">
-                  {suggestedVillages.map(village => (
-                    <button key={village.id} onClick={() => addStop(village)} className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-full hover:bg-emerald-500/20 transition-colors flex items-center gap-1">
-                      <Plus className="h-3 w-3" /> {village.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex-1 min-h-0 pt-2 flex flex-col">
-              <Label className="font-semibold mb-2">
-                Route Stops ({selectedStops.length + (startPlace ? 1 : 0) + (endPlace ? 1 : 0)})
-              </Label>
-              <ScrollArea className="h-[350px] w-full border rounded-lg p-2 bg-muted/10 pr-4">
-                {!startPlace && !endPlace && selectedStops.length === 0 ? (
-                  <div className="h-full flex items-center justify-center text-muted-foreground text-xs text-center p-4">
-                    Type a city on the left, check the suggested villages here, or search manually.
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    
-                    {/* START PLACE STUB */}
-                    {startPlace && (
-                      <div className="flex items-center gap-2 text-[11px] bg-emerald-500/10 border border-emerald-500/20 p-2 rounded-md shadow-sm">
-                        <span className="w-5 h-5 rounded-full flex items-center justify-center font-bold bg-emerald-500 text-white">
-                          1
-                        </span>
-                        <span className="flex-1 truncate font-semibold text-emerald-600 dark:text-emerald-400">
-                          {startPlace.name.split(',')[0]} <span className="text-[9px] uppercase">(Start)</span>
-                        </span>
-                        <div className="flex items-center gap-2">
-                           <div className="flex items-center gap-1 opacity-50">
-                             <Label className="text-[10px] text-muted-foreground">Arr:</Label>
-                             <Input disabled className="h-6 w-16 px-1 text-[10px]" value="—" />
-                           </div>
-                           <div className="flex items-center gap-1">
-                             <Label className="text-[10px] text-muted-foreground">Dep:</Label>
-                             <Input type="time" className="h-6 w-20 px-1 text-[10px]" defaultValue="08:00" />
-                           </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* INTERMEDIATE STOPS */}
-                    {selectedStops.map((s, i) => (
-                      <div key={s.id} className="flex items-center gap-2 text-[11px] bg-background border p-2 rounded-md shadow-sm ml-4 border-l-4" style={{ borderLeftColor: form.color }}>
-                        <span className="w-5 h-5 rounded-full flex items-center justify-center font-bold" style={{ backgroundColor: form.color, color: "#fff" }}>
-                          {startPlace ? i + 2 : i + 1}
-                        </span>
-                        <span className="flex-1 truncate font-semibold">{s.name}</span>
-                        <div className="flex items-center gap-2">
-                           <div className="flex items-center gap-1">
-                             <Label className="text-[10px] text-muted-foreground">Arr:</Label>
-                             <Input type="time" className="h-6 w-20 px-1 text-[10px]" defaultValue="09:00" />
-                           </div>
-                           <div className="flex items-center gap-1">
-                             <Label className="text-[10px] text-muted-foreground">Dep:</Label>
-                             <Input type="time" className="h-6 w-20 px-1 text-[10px]" defaultValue="09:05" />
-                           </div>
-                        </div>
-                        <button type="button" onClick={() => removeStop(s.id)} className="text-muted-foreground hover:text-destructive shrink-0 ml-1">
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-
-                    {/* END PLACE STUB */}
-                    {endPlace && (
-                      <div className="flex items-center gap-2 text-[11px] bg-red-500/10 border border-red-500/20 p-2 rounded-md shadow-sm">
-                        <span className="w-5 h-5 rounded-full flex items-center justify-center font-bold bg-red-500 text-white">
-                          {selectedStops.length + (startPlace ? 2 : 1)}
-                        </span>
-                        <span className="flex-1 truncate font-semibold text-red-600 dark:text-red-400">
-                          {endPlace.name.split(',')[0]} <span className="text-[9px] uppercase">(End)</span>
-                        </span>
-                        <div className="flex items-center gap-2">
-                           <div className="flex items-center gap-1">
-                             <Label className="text-[10px] text-muted-foreground">Arr:</Label>
-                             <Input type="time" className="h-6 w-20 px-1 text-[10px]" defaultValue="18:00" />
-                           </div>
-                           <div className="flex items-center gap-1 opacity-50">
-                             <Label className="text-[10px] text-muted-foreground">Dep:</Label>
-                             <Input disabled className="h-6 w-16 px-1 text-[10px]" value="—" />
-                           </div>
-                        </div>
-                      </div>
-                    )}
-
-                  </div>
-                )}
-              </ScrollArea>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2 pt-4 border-t mt-4">
-          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button type="submit" form="route-form" disabled={loading} className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6">
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Confirm & Save Route
-          </Button>
-        </div>
+        {open && <CreateRouteForm onSuccess={() => setOpen(false)} onCancel={() => setOpen(false)} />}
       </DialogContent>
     </Dialog>
   );
